@@ -7,9 +7,13 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Hello World from the server!")
-		fmt.Fprintf(w, "Hello, World from the server!")
+	http.HandleFunc("/webhook", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+
+		// Handle the POST request here
+		fmt.Println("Webhook received!")
 	})
 
 	fmt.Printf("Starting server at port 8080\n")
