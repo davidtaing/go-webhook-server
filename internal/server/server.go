@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/davidtaing/go-webhook-server/internal/server/db"
 )
 
 func WebhookHandler(w http.ResponseWriter, r *http.Request) {
@@ -16,6 +18,13 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func Start() {
+	db, err := db.Start()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer db.Close()
+
 	http.HandleFunc("/webhook", WebhookHandler)
 
 	fmt.Printf("Starting server at port 8080\n")
