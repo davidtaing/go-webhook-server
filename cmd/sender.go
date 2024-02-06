@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/davidtaing/go-webhook-server/internal/sender"
+	"github.com/davidtaing/go-webhook-server/internal/server"
 	"github.com/spf13/cobra"
 )
 
@@ -11,7 +12,7 @@ var senderCmd = &cobra.Command{
 	Short: "Sends a test event to the webhook server",
 	Run: func(cmd *cobra.Command, args []string) {
 		URL := "http://localhost:8080/webhook"
-		event := sender.Event{
+		event := server.WebhookEvent{
 			ID:    123,
 			Event: "user_registered",
 		}
