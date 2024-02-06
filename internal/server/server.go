@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,7 +15,11 @@ type WebhookEvent struct {
 	Event string `json:"event"`
 }
 
-func WebhookHandler(w http.ResponseWriter, r *http.Request) {
+type Env struct {
+	db *sql.DB
+}
+
+func (env *Env) WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -31,7 +36,9 @@ func Start() {
 
 	defer db.Close()
 
-	http.HandleFunc("/webhook", WebhookHandler)
+	env := Env{db: db}
+
+	http.HandleFunc("/webhook", env.WebhookHandler)
 
 	fmt.Printf("Starting server at port 8080\n")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
