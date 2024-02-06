@@ -18,18 +18,20 @@ func TestWebhookHandler_MethodNotAllowed(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		req, err := http.NewRequest(tt.method, "/webhook", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(tt.method, "/webhook", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(WebhookHandler)
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(WebhookHandler)
 
-		handler.ServeHTTP(rr, req)
+			handler.ServeHTTP(rr, req)
 
-		if status := rr.Code; status != http.StatusMethodNotAllowed {
-			t.Errorf("handler returned wrong status code for method %s: got %v want %v", tt.method, status, http.StatusMethodNotAllowed)
-		}
+			if status := rr.Code; status != http.StatusMethodNotAllowed {
+				t.Errorf("handler returned wrong status code for method %s: got %v want %v", tt.method, status, http.StatusMethodNotAllowed)
+			}
+		})
 	}
 }
