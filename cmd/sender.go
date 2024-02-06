@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Sends a test event to the webhook server
 var senderCmd = &cobra.Command{
 	Use:   "sender",
 	Short: "Sends a test event to the webhook server",
