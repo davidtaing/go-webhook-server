@@ -29,7 +29,7 @@ func (env *Env) WebhookHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func Start() {
-	db, err := db.Open()
+	db, err := db.Open("./database.db")
 	if err != nil {
 		log.Fatal(err)
 	}
