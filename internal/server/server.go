@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/davidtaing/go-webhook-server/internal/server/db"
+	"github.com/davidtaing/go-webhook-server/internal/db"
 )
 
 // Abitrary typedef to represent an event
