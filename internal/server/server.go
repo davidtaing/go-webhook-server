@@ -18,7 +18,7 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func Start() {
-	db, err := db.Start()
+	db, err := db.Open()
 	if err != nil {
 		log.Fatal(err)
 	}
