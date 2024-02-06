@@ -4,15 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+
+	"github.com/davidtaing/go-webhook-server/internal/server"
 )
 
-// Abitrary typedef to represent an event
-type Event struct {
-	ID    int    `json:"id"`
-	Event string `json:"event"`
-}
-
-func SendEvent(event Event, URL string) {
+func SendEvent(event server.WebhookEvent, URL string) {
 	eventJSON, err := json.Marshal(event)
 	if err != nil {
 		// Handle error
