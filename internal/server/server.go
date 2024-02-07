@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/davidtaing/go-webhook-server/internal/db"
+	"github.com/davidtaing/go-webhook-server/internal/database"
 )
 
 // Abitrary typedef to represent an event
@@ -29,7 +29,7 @@ func (env *Env) WebhookHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func Start() {
-	db, err := db.Open("./database.db")
+	db, err := database.Open("./database.db")
 	if err != nil {
 		log.Fatal(err)
 	}
