@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/davidtaing/go-webhook-server/internal/database"
+	"github.com/davidtaing/go-webhook-server/internal/logger"
+	"github.com/gorilla/mux"
 )
 
 // Abitrary typedef to represent an event
@@ -16,7 +19,8 @@ type WebhookEvent struct {
 }
 
 type Env struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *logger.Logger
 }
 
 func (env *Env) WebhookHandler(w http.ResponseWriter, r *http.Request) {
@@ -24,11 +28,28 @@ func (env *Env) WebhookHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 
-	// Handle the POST request here
 	fmt.Println("Webhook received!")
 }
 
+func loggingMiddleware(logger *logger.Logger, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		startTime := time.Now()
+
+		next.ServeHTTP(w, r)
+
+		duration := time.Since(startTime)
+
+		logger.Infow("handled request",
+			"method", r.Method,
+			"url", r.URL.String(),
+			"response_time", duration,
+		)
+	})
+}
+
 func Start() {
+	logger := logger.New()
+
 	db, err := database.Open("./db/database.db")
 	if err != nil {
 		log.Fatal(err)
@@ -36,12 +57,17 @@ func Start() {
 
 	defer db.Close()
 
-	env := Env{db: db}
+	env := Env{db: db, logger: logger}
 
-	http.HandleFunc("/webhook", env.WebhookHandler)
+	r := mux.NewRouter()
+
+	r.HandleFunc("/webhook", env.WebhookHandler)
+	r.Use(func(next http.Handler) http.Handler {
+		return loggingMiddleware(logger, next)
+	})
 
 	fmt.Printf("Starting server at port 8080\n")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatal(err)
 	}
 }
