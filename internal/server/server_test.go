@@ -41,7 +41,7 @@ func TestWebhookHandler_MethodNotAllowed(t *testing.T) {
 
 func TestWebhookHandler_HandleDuplicateEvent(t *testing.T) {
 	event := WebhookEvent{
-		ID:    1,
+		ID:    "1",
 		Event: "test",
 	}
 

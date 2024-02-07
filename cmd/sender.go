@@ -13,7 +13,7 @@ var senderCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		URL := "http://localhost:8080/webhook"
 		event := server.WebhookEvent{
-			ID:    123,
+			ID:    "123",
 			Event: "user_registered",
 		}
 

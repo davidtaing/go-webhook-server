@@ -11,7 +11,7 @@ import (
 
 // Abitrary typedef to represent an event
 type WebhookEvent struct {
-	ID    int    `json:"id"`
+	ID    string `json:"id"`
 	Event string `json:"event"`
 }
 
