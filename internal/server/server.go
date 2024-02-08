@@ -18,12 +18,12 @@ type WebhookEvent struct {
 	Event string `json:"event"`
 }
 
-type Env struct {
+type server struct {
 	db     *sql.DB
 	logger *logger.Logger
 }
 
-func (env *Env) WebhookHandler(w http.ResponseWriter, r *http.Request) {
+func (s *server) WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -31,7 +31,7 @@ func (env *Env) WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Webhook received!")
 }
 
-func loggingMiddleware(logger *logger.Logger, next http.Handler) http.Handler {
+func LogMiddleware(logger *logger.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		startTime := time.Now()
 
@@ -57,13 +57,13 @@ func Start() {
 
 	defer db.Close()
 
-	env := Env{db: db, logger: logger}
+	env := server{db: db, logger: logger}
 
 	r := mux.NewRouter()
 
 	r.HandleFunc("/webhook", env.WebhookHandler)
 	r.Use(func(next http.Handler) http.Handler {
-		return loggingMiddleware(logger, next)
+		return LogMiddleware(logger, next)
 	})
 
 	fmt.Printf("Starting server at port 8080\n")
