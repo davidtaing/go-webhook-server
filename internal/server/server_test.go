@@ -28,7 +28,7 @@ func TestWebhookHandler_MethodNotAllowed(t *testing.T) {
 
 			rr := httptest.NewRecorder()
 			env := server{}
-			handler := http.HandlerFunc(env.WebhookHandler)
+			handler := http.HandlerFunc(env.handleWebhook())
 
 			handler.ServeHTTP(rr, req)
 
@@ -64,7 +64,7 @@ func TestWebhookHandler_HandleDuplicateEvent(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	env := server{}
-	handler := http.HandlerFunc(env.WebhookHandler)
+	handler := http.HandlerFunc(env.handleWebhook())
 
 	handler.ServeHTTP(rr, req)
 

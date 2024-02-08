@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/davidtaing/go-webhook-server/internal/database"
 	"github.com/davidtaing/go-webhook-server/internal/logger"
@@ -20,54 +19,26 @@ type WebhookEvent struct {
 
 type server struct {
 	db     *sql.DB
+	router *mux.Router
 	logger *logger.Logger
 }
 
-func (s *server) WebhookHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-
-	fmt.Println("Webhook received!")
+func newServer() *server {
+	s := &server{}
+	s.routes()
+	return s
 }
 
-func LogMiddleware(logger *logger.Logger, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		startTime := time.Now()
+func Run() {
+	s := newServer()
+	s.db = database.Open("./db/database.db")
+	s.logger = logger.New()
+	s.router = mux.NewRouter()
 
-		next.ServeHTTP(w, r)
-
-		duration := time.Since(startTime)
-
-		logger.Infow("handled request",
-			"method", r.Method,
-			"url", r.URL.String(),
-			"response_time", duration,
-		)
-	})
-}
-
-func Start() {
-	logger := logger.New()
-
-	db, err := database.Open("./db/database.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer db.Close()
-
-	env := server{db: db, logger: logger}
-
-	r := mux.NewRouter()
-
-	r.HandleFunc("/webhook", env.WebhookHandler)
-	r.Use(func(next http.Handler) http.Handler {
-		return LogMiddleware(logger, next)
-	})
+	defer s.db.Close()
 
 	fmt.Printf("Starting server at port 8080\n")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	if err := http.ListenAndServe(":8080", s.router); err != nil {
 		log.Fatal(err)
 	}
 }

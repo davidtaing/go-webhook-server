@@ -10,7 +10,7 @@ var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Starts the webhook server on port 8080",
 	Run: func(cmd *cobra.Command, args []string) {
-		server.Start()
+		server.Run()
 	},
 }
 
