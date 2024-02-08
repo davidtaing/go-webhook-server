@@ -1,7 +1,9 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/davidtaing/go-webhook-server/internal/models"
@@ -19,10 +21,13 @@ func (s *server) handleWebhook() http.HandlerFunc {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 
-		// decode body
-		var body request
+		var (
+			body       request      // Unmarshalled request body / payload.
+			jsonBuffer bytes.Buffer // Raw JSON payload to be saved in db.
+		)
 
-		err := json.NewDecoder(r.Body).Decode(&body)
+		tee := io.TeeReader(r.Body, &jsonBuffer)
+		err := json.NewDecoder(tee).Decode(&body)
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, "Bad request", http.StatusBadRequest)
@@ -49,7 +54,7 @@ func (s *server) handleWebhook() http.HandlerFunc {
 		webhook := models.Webhook{
 			ID:      body.ID,
 			Event:   body.Event,
-			Payload: `{"id": "123", "name": "test"}`,
+			Payload: jsonBuffer.String(),
 			Source:  "development",
 		}
 
