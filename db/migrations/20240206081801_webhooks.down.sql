@@ -1,1 +1,1 @@
-DELETE TABLE IF NOT EXISTS webhooks;
+DROP TABLE IF EXISTS webhooks;
