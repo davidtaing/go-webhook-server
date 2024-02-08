@@ -1,14 +1,21 @@
+/**
+ * Sends a test webhook event to the specified URL.
+ * This isn't meant to be a production-ready webhook sender, but rather a simple util fire a webhook event.
+ */
 package sender
 
 import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-
-	"github.com/davidtaing/go-webhook-server/internal/server"
 )
 
-func SendEvent(event server.WebhookEvent, URL string) {
+type WebhookPayload struct {
+	ID    string `json:"id"`
+	Event string `json:"event"`
+}
+
+func SendEvent(event WebhookPayload, URL string) {
 	eventJSON, err := json.Marshal(event)
 	if err != nil {
 		// Handle error

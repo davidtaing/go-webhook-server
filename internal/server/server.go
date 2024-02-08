@@ -11,12 +11,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Abitrary typedef to represent an event
-type WebhookEvent struct {
-	ID    string `json:"id"`
-	Event string `json:"event"`
-}
-
 type server struct {
 	db     *sql.DB
 	router *mux.Router

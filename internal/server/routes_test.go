@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/davidtaing/go-webhook-server/internal/models"
 )
 
 func TestWebhookHandler_MethodNotAllowed(t *testing.T) {
@@ -40,7 +42,7 @@ func TestWebhookHandler_MethodNotAllowed(t *testing.T) {
 }
 
 func TestWebhookHandler_HandleDuplicateEvent(t *testing.T) {
-	event := WebhookEvent{
+	event := models.Webhook{
 		ID:    "1",
 		Event: "test",
 	}
