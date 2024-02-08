@@ -1,8 +1,10 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
+
+	"github.com/davidtaing/go-webhook-server/internal/models"
+	"github.com/davidtaing/go-webhook-server/internal/repository"
 )
 
 func (s *server) handleWebhook() http.HandlerFunc {
@@ -11,17 +13,38 @@ func (s *server) handleWebhook() http.HandlerFunc {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 
-		// check if the webhook is already in DB
-		// ✅ - if yes return 200 OK.
+		webhookRepo := &repository.WebhookRepository{DB: s.db}
 
-		// need to return 200 OK, or the request will be treated as a failure
-		// and will be retried/resent by the sender
+		exists, err := webhookRepo.FindByID("123")
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		if exists != nil {
+			// non-200 statuses are treated as errors, and the request will be retried / resent
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
 		// create if webhook doesn't exist
+		webhook := models.Webhook{
+			ID:      "123",
+			Event:   "test",
+			Payload: `{"id": "123", "name": "test"}`,
+			Source:  "development",
+		}
 
-		// return creation result as status
-		fmt.Println("Webhook received!")
+		err = webhookRepo.Create(webhook)
+		if err != nil {
+			s.logger.Errorw("Failed to create webhook",
+				"error", err,
+			)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
 
-		w.WriteHeader(http.StatusNotImplemented)
+		w.WriteHeader(http.StatusOK)
 	}
 }

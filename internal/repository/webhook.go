@@ -7,15 +7,15 @@ import (
 )
 
 type WebhookRepository struct {
-	db *sql.DB
+	DB *sql.DB
 }
 
 // Adds a new webhook to the database.
 // Returns nil if the webhook was added successfully, or the error upon failure.
 func (w *WebhookRepository) Create(webhook models.Webhook) error {
-	statement := `INSERT INTO webhooks (id, event, payload) VALUES ($1, $2, $3)`
+	statement := `INSERT INTO webhooks (id, source, event, payload) VALUES ($1, $2, $3, $4)`
 
-	_, err := w.db.Exec(statement, webhook.ID, webhook.Event, webhook.Payload)
+	_, err := w.DB.Exec(statement, webhook.ID, webhook.Source, webhook.Event, webhook.Payload)
 	return err
 }
 
@@ -26,8 +26,8 @@ func (w *WebhookRepository) FindByID(id string) (*models.Webhook, error) {
 
 	var webhook models.Webhook
 
-	row := w.db.QueryRow(statement, id)
-	switch err := row.Scan(&webhook.ID, &webhook.Event, &webhook.Payload); err {
+	row := w.DB.QueryRow(statement, id)
+	switch err := row.Scan(&webhook.ID, &webhook.Source, &webhook.Event, &webhook.Created, &webhook.Updated, &webhook.Payload); err {
 	case sql.ErrNoRows:
 		return nil, nil
 	case nil:
