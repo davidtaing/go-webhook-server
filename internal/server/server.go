@@ -23,9 +23,10 @@ func setup(s *server) *server {
 }
 
 func Run() {
+	l := logger.New()
 	s := setup(&server{
-		db:     database.Open("./db/database.db"),
-		logger: logger.New(),
+		logger: l,
+		db:     database.Open("./db/database.db", l),
 		router: mux.NewRouter(),
 	})
 
