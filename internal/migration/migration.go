@@ -25,7 +25,6 @@ func SetupUpCmd(ctx *MigrateCmdContext) func(cmd *cobra.Command, args []string) 
 
 		logger.Infow("Running up migrations",
 			"path", ctx.Database,
-			"url", url,
 			"migrations", MIGRATIONS_URL,
 			"steps", ctx.Steps,
 		)
@@ -63,7 +62,6 @@ func SetupDownCmd(ctx *MigrateCmdContext) func(cmd *cobra.Command, args []string
 
 		logger.Infow("Running down migrations",
 			"path", ctx.Database,
-			"url", url,
 			"migrations", MIGRATIONS_URL,
 			"steps", ctx.Steps,
 		)
