@@ -17,17 +17,17 @@ type server struct {
 	logger *logger.Logger
 }
 
-func newServer() *server {
-	s := &server{}
+func setup(s *server) *server {
 	s.routes()
 	return s
 }
 
 func Run() {
-	s := newServer()
-	s.db = database.Open("./db/database.db")
-	s.logger = logger.New()
-	s.router = mux.NewRouter()
+	s := setup(&server{
+		db:     database.Open("./db/database.db"),
+		logger: logger.New(),
+		router: mux.NewRouter(),
+	})
 
 	defer s.db.Close()
 
