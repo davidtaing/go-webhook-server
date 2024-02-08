@@ -1,17 +1,17 @@
-DATABASE_PATH = db/database.db
-DATABASE_URL = sqlite3://${DATABASE_PATH}
+DATABASE_PATH = ./db/database.db
 
 init-db:
-	@echo "Deleting database at ${DATABASE_PATH}"
-	@rm -f ${DATABASE_PATH}
-	@echo "Creating empty database at ${DATABASE_PATH}"
-	@sqlite3 ${DATABASE_PATH} "VACUUM;"
+	@echo "Initializing the database"
 	@$(MAKE) migrate-up
 
 migrate-up:
 	@echo "Running database up-migrations"
-	@migrate -database $(DATABASE_URL) -path db/migrations up
+	@./build/go-webhook-server migrate-up --database $(DATABASE_PATH)
 
 migrate-down:
 	@echo "Rolling back database via down-migrations"
-	@migrate -database $(DATABASE_URL) -path db/migrations down
+	@./build/go-webhook-server migrate-down --database $(DATABASE_PATH)
+
+build:
+	@echo "Building the application"
+	@go build -o "./build/go-webhook-server"
