@@ -21,5 +21,7 @@ func (s *server) handleWebhook() http.HandlerFunc {
 
 		// return creation result as status
 		fmt.Println("Webhook received!")
+
+		w.WriteHeader(http.StatusNotImplemented)
 	}
 }
