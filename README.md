@@ -24,3 +24,13 @@ Build a webhook server that...
 - go-migrate
 - hand rolled SQL (no ORMs for this project)
 - [spf13/cobra](https://github.com/spf13/cobra)
+
+## Acknowlegdements
+
+Shouting out some resources that I've used whilst building this.
+
+**GopherCon 2019: Mat Ryer - How I Write HTTP Web Services after Eight Years**
+https://www.youtube.com/watch?v=rWBSMsLG8po
+
+**GopherCon 2017: Mitchell Hashimoto - Advanced Testing with Go**
+https://www.youtube.com/watch?v=8hQG7QlcLBk
