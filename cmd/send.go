@@ -7,7 +7,7 @@ import (
 
 // Sends a test event to the webhook server
 var senderCmd = &cobra.Command{
-	Use:   "sender",
+	Use:   "send",
 	Short: "Sends a test event to the webhook server",
 	Run: func(cmd *cobra.Command, args []string) {
 		URL := "http://localhost:8080/webhook"
