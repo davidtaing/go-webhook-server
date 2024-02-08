@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/davidtaing/go-webhook-server/internal/models"
@@ -8,14 +9,29 @@ import (
 )
 
 func (s *server) handleWebhook() http.HandlerFunc {
+	type request struct {
+		ID    string `json:"id"`
+		Event string `json:"event"`
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 
-		webhookRepo := &repository.WebhookRepository{DB: s.db}
+		// decode body
+		var body request
 
-		exists, err := webhookRepo.FindByID("123")
+		err := json.NewDecoder(r.Body).Decode(&body)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, "Bad request", http.StatusBadRequest)
+			return
+		}
+
+		// check if webhook exists
+		webhookRepo := &repository.WebhookRepository{DB: s.db}
+		exists, err := webhookRepo.FindByID(body.ID)
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -23,15 +39,16 @@ func (s *server) handleWebhook() http.HandlerFunc {
 		}
 
 		if exists != nil {
-			// non-200 statuses are treated as errors, and the request will be retried / resent
+			// non-200 statuses are treated as errors,
+			// leading to webhooks being retried / resent by the sender
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 
 		// create if webhook doesn't exist
 		webhook := models.Webhook{
-			ID:      "123",
-			Event:   "test",
+			ID:      body.ID,
+			Event:   body.Event,
 			Payload: `{"id": "123", "name": "test"}`,
 			Source:  "development",
 		}
