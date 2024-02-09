@@ -34,3 +34,21 @@ https://www.youtube.com/watch?v=rWBSMsLG8po
 
 **GopherCon 2017: Mitchell Hashimoto - Advanced Testing with Go**
 https://www.youtube.com/watch?v=8hQG7QlcLBk
+
+## Project Structure
+
+The application can be broken down into multiple sub-applications:
+
+- `server`: The main application, the Webhook server. Accessed via the `server` CLI command.
+- `sender-cli`: CLI app to send test webhook events to the server. Accessed via the `send` CLI command.
+- `migrations-cli`: Applies schema changes to the database. It can be accessed via the `migrate-up` and `migrate-down` CLI commands.
+
+### Packages
+
+- `database`: Database utils such as opening a db connection.
+- `logger`: Structured logging via uber-go/zap.
+- `migration`: Applies database migrations. Used by the migrate-up & migrate-down CLI commands.
+- `models`: Defines the struct types for the data models used in the database.
+- `repository`: Implements CRUD operations for persisting data to the database.
+- `sender`: Send a webhook event to the Webhook server. Used by the `send` CLI command.
+- `server`: Webhook server. This is the main application in this project.
