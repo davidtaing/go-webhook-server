@@ -15,3 +15,7 @@ migrate-down:
 build:
 	@echo "Building the application"
 	@go build -o "./build/go-webhook-server"
+
+test:
+	@echo "Running tests"
+	@go test -v ./...
