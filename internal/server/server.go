@@ -7,14 +7,14 @@ import (
 	"net/http"
 
 	"github.com/davidtaing/go-webhook-server/internal/database"
-	"github.com/davidtaing/go-webhook-server/internal/logger"
+	l "github.com/davidtaing/go-webhook-server/internal/logger"
 	"github.com/gorilla/mux"
 )
 
 type server struct {
 	db     *sql.DB
 	router *mux.Router
-	logger *logger.Logger
+	logger *l.Logger
 }
 
 func setup(s *server) *server {
@@ -23,7 +23,7 @@ func setup(s *server) *server {
 }
 
 func Run() {
-	l := logger.New()
+	l := l.New()
 	s := setup(&server{
 		logger: l,
 		db:     database.Open("./db/database.db", l),
