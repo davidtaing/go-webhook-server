@@ -3,8 +3,7 @@ package cmd
 import (
 	l "github.com/davidtaing/go-webhook-server/internal/logger"
 	"github.com/davidtaing/go-webhook-server/internal/migration"
-	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+
 	"github.com/spf13/cobra"
 )
 
@@ -18,15 +17,14 @@ var downCmd = &cobra.Command{
 }
 
 func init() {
-	ctx := &migration.MigrateCmdContext{
-		Logger: l.New(),
-	}
+	logger := l.New()
+	opts := &migration.MigrationOpts{}
 
-	downCmd.Flags().StringVarP(&ctx.Database, "database", "d", "", "path to the sqlite3 database file")
+	downCmd.Flags().StringVarP(&opts.DatabasePath, "database", "d", "", "path to the sqlite3 database file")
 	downCmd.MarkFlagRequired("database")
-	downCmd.Flags().IntVarP(&ctx.Steps, "steps", "s", 0, "Number of steps to migrate. If no steps are provided, all migrations will be applied.")
+	downCmd.Flags().IntVarP(&opts.Steps, "steps", "s", 0, "Number of steps to migrate. If no steps are provided, all migrations will be applied.")
 
-	downCmd.Run = migration.SetupDownCmd(ctx)
+	downCmd.Run = migration.SetupDownCmd(*opts, logger)
 
 	rootCmd.AddCommand(downCmd)
 }

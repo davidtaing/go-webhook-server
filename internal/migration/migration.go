@@ -11,39 +11,41 @@ import (
 )
 
 const DB_SCHEME = "sqlite3://"
-const MIGRATIONS_URL = "file://./db/migrations"
+const MIGRATIONS_SCHEME = "file://"
+const MIGRATIONS_DIR = "./db/migrations"
 
-type MigrateCmdContext struct {
-	Logger   *logger.Logger
-	Steps    int
-	Database string
+type MigrationOpts struct {
+	Steps          int
+	DatabasePath   string
+	MigrationsPath string // defaults to ./db/migrations if this is a nil value. Override for testing as working directory is set to the file location.
 }
 
 // Run up migrations on the SQLite database. If the database does not exist, a new database will be created.
-func RunUpMigrations(path string, steps int, logger *logger.Logger) error {
-	url := DB_SCHEME + path
+func RunUpMigrations(opts MigrationOpts, logger *logger.Logger) error {
+	url := DB_SCHEME + opts.DatabasePath
+	migrationURL := getMigrationURL(opts.MigrationsPath)
 
-	logger.Infow("Running up migrations",
-		"path", path,
-		"migrations", MIGRATIONS_URL,
-		"steps", steps,
+	logger.Debugw("Running up migrations",
+		"dbName", opts.DatabasePath,
+		"migrations", migrationURL,
+		"steps", opts.Steps,
 	)
 
-	m, err := migrate.New(MIGRATIONS_URL, url)
+	m, err := migrate.New(migrationURL, url)
 	if err != nil {
 		return fmt.Errorf("failed to create migration instance: %w", err)
 	}
 
 	defer m.Close()
 
-	if steps < 0 {
+	if opts.Steps < 0 {
 		return fmt.Errorf("steps must be greater than or equal to 0")
 	}
 
-	if steps == 0 {
+	if opts.Steps == 0 {
 		err = m.Up()
 	} else {
-		err = m.Steps(steps)
+		err = m.Steps(opts.Steps)
 	}
 
 	if err != nil && err.Error() == "no change" {
@@ -59,31 +61,32 @@ func RunUpMigrations(path string, steps int, logger *logger.Logger) error {
 }
 
 // Run down migrations on the SQLite database. If the database does not exist, a new database will be created.
-func RunDownMigrations(path string, steps int, logger *logger.Logger) error {
-	url := DB_SCHEME + path
+func RunDownMigrations(opts MigrationOpts, logger *logger.Logger) error {
+	url := DB_SCHEME + opts.DatabasePath
+	migrationURL := getMigrationURL(opts.MigrationsPath)
 
-	logger.Infow("Running down migrations",
-		"path", path,
-		"migrations", MIGRATIONS_URL,
-		"steps", steps,
+	logger.Debugw("Running down migrations",
+		"dbName", opts.DatabasePath,
+		"migrations", migrationURL,
+		"steps", opts.Steps,
 	)
 
-	m, err := migrate.New(MIGRATIONS_URL, url)
+	m, err := migrate.New(migrationURL, url)
 	if err != nil {
 		return fmt.Errorf("failed to create migration instance: %w", err)
 	}
 
 	defer m.Close()
 
-	if steps < 0 {
+	if opts.Steps < 0 {
 		return fmt.Errorf("steps must be greater than or equal to 0")
 	}
 
-	if steps == 0 {
+	if opts.Steps == 0 {
 		err = m.Down()
 	} else {
 		// negative steps denote down migrations in the go-migrate API
-		err = m.Steps(-steps)
+		err = m.Steps(-opts.Steps)
 	}
 
 	if err != nil && err.Error() == "no change" {
@@ -99,22 +102,35 @@ func RunDownMigrations(path string, steps int, logger *logger.Logger) error {
 
 }
 
-func SetupUpCmd(ctx *MigrateCmdContext) func(cmd *cobra.Command, args []string) {
+func SetupUpCmd(opts MigrationOpts, logger *logger.Logger) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		err := RunUpMigrations(ctx.Database, ctx.Steps, ctx.Logger)
+		err := RunUpMigrations(opts, logger)
 
 		if err != nil {
-			ctx.Logger.Fatal(err)
+			logger.Fatal(err)
 		}
 	}
 }
 
-func SetupDownCmd(ctx *MigrateCmdContext) func(cmd *cobra.Command, args []string) {
+func SetupDownCmd(opts MigrationOpts, logger *logger.Logger) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		err := RunDownMigrations(ctx.Database, ctx.Steps, ctx.Logger)
+		err := RunDownMigrations(opts, logger)
 
 		if err != nil {
-			ctx.Logger.Fatal(err)
+			logger.Fatal(err)
 		}
 	}
+}
+
+// Returns the URL for the migration directory. If an empty path is provided, the default path is used.
+//
+// Use the path parameter to override the default path for testing.
+func getMigrationURL(path string) string {
+	migrationDir := MIGRATIONS_DIR
+
+	if path != "" {
+		migrationDir = path
+	}
+
+	return MIGRATIONS_SCHEME + migrationDir
 }
