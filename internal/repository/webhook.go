@@ -36,3 +36,29 @@ func (w *WebhookRepository) FindByID(id string) (*models.Webhook, error) {
 		return nil, err
 	}
 }
+
+func (w *WebhookRepository) Get() ([]models.Webhook, error) {
+	statement := `SELECT * FROM webhooks`
+
+	rows, err := w.DB.Query(statement)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var webhooks []models.Webhook
+	for rows.Next() {
+		var webhook models.Webhook
+		err := rows.Scan(&webhook.ID, &webhook.Source, &webhook.Event, &webhook.Created, &webhook.Updated, &webhook.Payload)
+		if err != nil {
+			return nil, err
+		}
+		webhooks = append(webhooks, webhook)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return webhooks, nil
+}

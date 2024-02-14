@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"testing"
+
+	"github.com/davidtaing/go-webhook-server/internal/repository"
 )
 
 func TestWebhookHandler_MethodNotAllowed(t *testing.T) {
@@ -72,9 +74,23 @@ func TestWebhookHandler_HandleDuplicateEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// expect a 200 OK status code, as non OK statuses will cause the duplicate event to be retried by the sender
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
-	}
+	t.Run("recieve 200 status", func(t *testing.T) {
+		// expect a 200 OK status code, as non OK statuses will cause the duplicate event to be retried by the sender
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+		}
+	})
 
+	t.Run("only one webhook in database", func(t *testing.T) {
+		repo := &repository.WebhookRepository{DB: srv.db}
+
+		webhooks, err := repo.Get()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(webhooks) != 1 {
+			t.Errorf("expected 1 webhook in database, got %d", len(webhooks))
+		}
+	})
 }
