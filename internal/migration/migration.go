@@ -17,40 +17,77 @@ type MigrateCmdContext struct {
 	Database string
 }
 
+func RunUpMigrations(path string, steps int, logger *logger.Logger) {
+	url := DB_SCHEME + path
+
+	logger.Infow("Running up migrations",
+		"path", path,
+		"migrations", MIGRATIONS_URL,
+		"steps", steps,
+	)
+
+	m, err := migrate.New(MIGRATIONS_URL, url)
+	if err != nil {
+		logger.Fatal("failed to create migration instance:\n", err)
+	}
+
+	defer m.Close()
+
+	if steps > 0 {
+		err = m.Steps(steps)
+	} else {
+		err = m.Up()
+	}
+
+	if err != nil && err.Error() == "no change" {
+		fmt.Println("no change")
+		return
+	}
+
+	if err != nil {
+		logger.Fatal("Error applying migrations:\n", err)
+		return
+	}
+}
+
+func RunDownMigrations(path string, steps int, logger *logger.Logger) {
+	url := DB_SCHEME + path
+
+	logger.Infow("Running down migrations",
+		"path", path,
+		"migrations", MIGRATIONS_URL,
+		"steps", steps,
+	)
+
+	m, err := migrate.New(MIGRATIONS_URL, url)
+	if err != nil {
+		logger.Fatal("failed to create migration instace: \n", err)
+	}
+
+	defer m.Close()
+
+	if steps > 0 {
+		err = m.Steps(-steps)
+	} else {
+		err = m.Down()
+	}
+
+	if err != nil && err.Error() == "no change" {
+		fmt.Println("no change")
+		return
+	}
+
+	if err != nil {
+		logger.Fatal("Error applying migrations: \n", err)
+		return
+	}
+}
+
 func SetupUpCmd(ctx *MigrateCmdContext) func(cmd *cobra.Command, args []string) {
 	logger := ctx.Logger
 
 	return func(cmd *cobra.Command, args []string) {
-		url := DB_SCHEME + ctx.Database
-
-		logger.Infow("Running up migrations",
-			"path", ctx.Database,
-			"migrations", MIGRATIONS_URL,
-			"steps", ctx.Steps,
-		)
-
-		m, err := migrate.New(MIGRATIONS_URL, url)
-		if err != nil {
-			logger.Fatal("failed to create migration instance:\n", err)
-		}
-
-		defer m.Close()
-
-		if ctx.Steps > 0 {
-			err = m.Steps(ctx.Steps)
-		} else {
-			err = m.Up()
-		}
-
-		if err != nil && err.Error() == "no change" {
-			fmt.Println("no change")
-			return
-		}
-
-		if err != nil {
-			logger.Fatal("Error applying migrations:\n", err)
-			return
-		}
+		RunUpMigrations(ctx.Database, ctx.Steps, logger)
 	}
 }
 
@@ -58,35 +95,6 @@ func SetupDownCmd(ctx *MigrateCmdContext) func(cmd *cobra.Command, args []string
 	logger := ctx.Logger
 
 	return func(cmd *cobra.Command, args []string) {
-		url := DB_SCHEME + ctx.Database
-
-		logger.Infow("Running down migrations",
-			"path", ctx.Database,
-			"migrations", MIGRATIONS_URL,
-			"steps", ctx.Steps,
-		)
-
-		m, err := migrate.New(MIGRATIONS_URL, url)
-		if err != nil {
-			logger.Fatal("failed to create migration instace: \n", err)
-		}
-
-		defer m.Close()
-
-		if ctx.Steps > 0 {
-			err = m.Steps(-ctx.Steps)
-		} else {
-			err = m.Down()
-		}
-
-		if err != nil && err.Error() == "no change" {
-			fmt.Println("no change")
-			return
-		}
-
-		if err != nil {
-			logger.Fatal("Error applying migrations: \n", err)
-			return
-		}
+		RunDownMigrations(ctx.Database, ctx.Steps, logger)
 	}
 }
