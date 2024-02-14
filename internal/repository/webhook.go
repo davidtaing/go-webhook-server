@@ -37,10 +37,20 @@ func (w *WebhookRepository) FindByID(id string) (*models.Webhook, error) {
 	}
 }
 
-func (w *WebhookRepository) Get() ([]models.Webhook, error) {
-	statement := `SELECT * FROM webhooks`
+func (w *WebhookRepository) Get(filters *map[string]interface{}) ([]models.Webhook, error) {
+	statement := "SELECT * FROM webhooks"
 
-	rows, err := w.DB.Query(statement)
+	var args []interface{}
+
+	if filters != nil {
+		statement += " WHERE 1=1"
+		for key, value := range *filters {
+			statement += " AND " + key + " = ?"
+			args = append(args, value)
+		}
+	}
+
+	rows, err := w.DB.Query(statement, args...)
 	if err != nil {
 		return nil, err
 	}

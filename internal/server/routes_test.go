@@ -83,8 +83,11 @@ func TestWebhookHandler_HandleDuplicateEvent(t *testing.T) {
 
 	t.Run("only one webhook in database", func(t *testing.T) {
 		repo := &repository.WebhookRepository{DB: srv.db}
+		filters := map[string]interface{}{
+			"id": event.ID,
+		}
 
-		webhooks, err := repo.Get()
+		webhooks, err := repo.Get(&filters)
 		if err != nil {
 			t.Fatal(err)
 		}
