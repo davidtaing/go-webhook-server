@@ -17,6 +17,7 @@ type MigrateCmdContext struct {
 	Database string
 }
 
+// Runs up migrations for the given database path
 func RunUpMigrations(path string, steps int, logger *logger.Logger) {
 	url := DB_SCHEME + path
 
@@ -33,10 +34,12 @@ func RunUpMigrations(path string, steps int, logger *logger.Logger) {
 
 	defer m.Close()
 
-	if steps > 0 {
+	if steps == 0 {
+		err = m.Up()
+	} else if steps > 0 {
 		err = m.Steps(steps)
 	} else {
-		err = m.Up()
+		logger.Fatal("steps must be greater than or equal to 0")
 	}
 
 	if err != nil && err.Error() == "no change" {
@@ -66,10 +69,13 @@ func RunDownMigrations(path string, steps int, logger *logger.Logger) {
 
 	defer m.Close()
 
-	if steps > 0 {
+	if steps == 0 {
+		err = m.Down()
+	} else if steps > 0 {
+		// negative steps denote down migrations in the go-migrate API
 		err = m.Steps(-steps)
 	} else {
-		err = m.Down()
+		logger.Fatal("steps must be greater than or equal to 0")
 	}
 
 	if err != nil && err.Error() == "no change" {
