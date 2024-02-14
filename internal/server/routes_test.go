@@ -38,13 +38,15 @@ func TestWebhookHandler_MethodNotAllowed(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, err := http.NewRequest(tt.method, WEBHOOK_HANDLER_ENDPOINT, nil)
+			rr, err := sendRequest(requestOpts{
+				handler: h,
+				method:  tt.method,
+				body:    []byte{},
+			})
+
 			if err != nil {
 				t.Fatal(err)
 			}
-
-			rr := httptest.NewRecorder()
-			h.ServeHTTP(rr, req)
 
 			if status := rr.Code; status != http.StatusMethodNotAllowed {
 				t.Errorf("handler returned wrong status code for method %s: got %v want %v", tt.method, status, http.StatusMethodNotAllowed)
@@ -72,8 +74,13 @@ func TestWebhookHandler_HandleDuplicateEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sendRequest(h, eventJSON)
-	rr, err := sendRequest(h, eventJSON)
+	requestOpts := requestOpts{
+		handler: h,
+		body:    eventJSON,
+	}
+
+	sendRequest(requestOpts)
+	rr, err := sendRequest(requestOpts)
 
 	if err != nil {
 		t.Fatal(err)
@@ -123,16 +130,26 @@ func setupTestFixture(dbName string) (s *server, cleanup func()) {
 	return s, cleanup
 }
 
-func sendRequest(handler http.HandlerFunc, buf []byte) (*httptest.ResponseRecorder, error) {
-	bodyBuf := bytes.NewBuffer(buf)
+type requestOpts struct {
+	handler http.HandlerFunc
+	body    []byte
+	method  string // this will be treated as POST if not provided
+}
 
-	req, err := http.NewRequest(http.MethodPost, WEBHOOK_HANDLER_ENDPOINT, bodyBuf)
+func sendRequest(opts requestOpts) (*httptest.ResponseRecorder, error) {
+	if opts.method == "" {
+		opts.method = http.MethodPost
+	}
+
+	bodyBuf := bytes.NewBuffer(opts.body)
+
+	req, err := http.NewRequest(opts.method, WEBHOOK_HANDLER_ENDPOINT, bodyBuf)
 	if err != nil {
 		return nil, err
 	}
 
 	rr := httptest.NewRecorder()
-	handler.ServeHTTP(rr, req)
+	opts.handler.ServeHTTP(rr, req)
 
 	return rr, nil
 }
