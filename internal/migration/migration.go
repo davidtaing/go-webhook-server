@@ -17,8 +17,8 @@ type MigrateCmdContext struct {
 	Database string
 }
 
-// Runs up migrations for the given database path
-func RunUpMigrations(path string, steps int, logger *logger.Logger) {
+// Run up migrations on the SQLite database. If the database does not exist, a new database will be created.
+func RunUpMigrations(path string, steps int, logger *logger.Logger) error {
 	url := DB_SCHEME + path
 
 	logger.Infow("Running up migrations",
@@ -29,31 +29,35 @@ func RunUpMigrations(path string, steps int, logger *logger.Logger) {
 
 	m, err := migrate.New(MIGRATIONS_URL, url)
 	if err != nil {
-		logger.Fatal("failed to create migration instance:\n", err)
+		return fmt.Errorf("failed to create migration instance: %w", err)
 	}
 
 	defer m.Close()
 
+	if steps < 0 {
+		return fmt.Errorf("steps must be greater than or equal to 0")
+	}
+
 	if steps == 0 {
 		err = m.Up()
-	} else if steps > 0 {
-		err = m.Steps(steps)
 	} else {
-		logger.Fatal("steps must be greater than or equal to 0")
+		err = m.Steps(steps)
 	}
 
 	if err != nil && err.Error() == "no change" {
 		fmt.Println("no change")
-		return
+		return nil
 	}
 
 	if err != nil {
-		logger.Fatal("Error applying migrations:\n", err)
-		return
+		return fmt.Errorf("error applying migrations: %w", err)
 	}
+
+	return nil
 }
 
-func RunDownMigrations(path string, steps int, logger *logger.Logger) {
+// Run down migrations on the SQLite database. If the database does not exist, a new database will be created.
+func RunDownMigrations(path string, steps int, logger *logger.Logger) error {
 	url := DB_SCHEME + path
 
 	logger.Infow("Running down migrations",
@@ -64,43 +68,51 @@ func RunDownMigrations(path string, steps int, logger *logger.Logger) {
 
 	m, err := migrate.New(MIGRATIONS_URL, url)
 	if err != nil {
-		logger.Fatal("failed to create migration instace: \n", err)
+		return fmt.Errorf("failed to create migration instance: %w", err)
 	}
 
 	defer m.Close()
 
+	if steps < 0 {
+		return fmt.Errorf("steps must be greater than or equal to 0")
+	}
+
 	if steps == 0 {
 		err = m.Down()
-	} else if steps > 0 {
+	} else {
 		// negative steps denote down migrations in the go-migrate API
 		err = m.Steps(-steps)
-	} else {
-		logger.Fatal("steps must be greater than or equal to 0")
 	}
 
 	if err != nil && err.Error() == "no change" {
 		fmt.Println("no change")
-		return
+		return nil
 	}
 
 	if err != nil {
-		logger.Fatal("Error applying migrations: \n", err)
-		return
+		return fmt.Errorf("error applying migrations: %w", err)
 	}
+
+	return nil
+
 }
 
 func SetupUpCmd(ctx *MigrateCmdContext) func(cmd *cobra.Command, args []string) {
-	logger := ctx.Logger
-
 	return func(cmd *cobra.Command, args []string) {
-		RunUpMigrations(ctx.Database, ctx.Steps, logger)
+		err := RunUpMigrations(ctx.Database, ctx.Steps, ctx.Logger)
+
+		if err != nil {
+			ctx.Logger.Fatal(err)
+		}
 	}
 }
 
 func SetupDownCmd(ctx *MigrateCmdContext) func(cmd *cobra.Command, args []string) {
-	logger := ctx.Logger
-
 	return func(cmd *cobra.Command, args []string) {
-		RunDownMigrations(ctx.Database, ctx.Steps, logger)
+		err := RunDownMigrations(ctx.Database, ctx.Steps, ctx.Logger)
+
+		if err != nil {
+			ctx.Logger.Fatal(err)
+		}
 	}
 }
